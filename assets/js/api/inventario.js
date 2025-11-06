@@ -1,0 +1,473 @@
+/**
+ * Módulo de API para Inventario
+ * 
+ * Contiene todas las funciones relacionadas con la gestión de inventarios.
+ */
+
+import { API_URLS, API_METHODS } from '../config.js';
+import { AppState } from '../state.js';
+import { $, toast, fmt12, convertirFechaToMySQL } from '../utils.js';
+import { obtenerIdRegistradoPor } from './colaboradores.js';
+
+/**
+ * Formatear fecha desde formato API a formato legible
+ * @param {string} fechaAPI - Fecha en formato "2025-10-22 10:08:05"
+ * @returns {string} Fecha en formato "10/22/2025 10:08 AM"
+ */
+export function formatearFechaDesdeAPI(fechaAPI) {
+  try {
+    const fecha = new Date(fechaAPI);
+    const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+    const dia = fecha.getDate().toString().padStart(2, '0');
+    const anio = fecha.getFullYear();
+    let hora = fecha.getHours();
+    const minuto = fecha.getMinutes().toString().padStart(2, '0');
+    const ampm = hora >= 12 ? 'PM' : 'AM';
+    
+    hora = hora % 12;
+    if (hora === 0) hora = 12;
+    
+    return `${mes}/${dia}/${anio} ${hora}:${minuto} ${ampm}`;
+  } catch (error) {
+    console.error('Error formateando fecha:', error);
+    return fechaAPI; // Retornar fecha original si hay error
+  }
+}
+
+/**
+ * Obtener el ID del inventario por su nombre
+ */
+export async function obtenerIdInventario(nombreInventario) {
+  try {
+    console.log('Buscando ID para inventario:', nombreInventario);
+    
+    const api = API_URLS.INVENTARIO;
+    const method = API_METHODS.LISTAR_INVENTARIOS;
+    const response = await fetch(`${api}?method=${method}`);
+    
+    if (response.status !== 200) {
+      throw new Error(`Error HTTP: ${response.status}`);
+    }
+    
+    const inventarios = await response.json();
+    console.log('Inventarios disponibles:', inventarios);
+    
+    // Buscar el inventario por nombre
+    const inventario = inventarios.find(inv => inv.NOMBRE === nombreInventario);
+    
+    if (inventario) {
+      console.log('Inventario encontrado:', inventario);
+      return inventario.ID;
+    } else {
+      console.warn('Inventario no encontrado, usando nombre como fallback');
+      return nombreInventario; // Fallback al nombre si no se encuentra
+    }
+  } catch (error) {
+    console.error('Error obteniendo ID del inventario:', error);
+    console.warn('Usando nombre como fallback');
+    return nombreInventario; // Fallback al nombre en caso de error
+  }
+}
+
+/**
+ * Cargar lista de inventarios disponibles desde la API
+ */
+export async function cargarInventariosDisponibles() {
+  try {
+    const response = await fetch(`${API_URLS.INVENTARIO}?method=${API_METHODS.LISTAR_INVENTARIOS}`);
+    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+    const inventarios = await response.json();
+    console.log('Inventarios cargados:', inventarios);
+    return inventarios;
+  } catch (error) {
+    console.error('Error cargando inventarios:', error);
+    toast('Error al cargar inventarios disponibles', 'error');
+    return [];
+  }
+}
+
+/**
+ * Cargar conteos desde la API para un inventario y almacén específicos
+ */
+export async function cargarConteosDesdeAPI(idInventario, almacen) {
+  try {
+    console.log('Cargando conteos desde API para inventario:', idInventario, 'almacén:', almacen);
+    
+    const api = API_URLS.INVENTARIO;
+    const method = API_METHODS.EXTRAER_INVENTARIOS_CONTEOS;
+    const id = `${idInventario}-${almacen.toUpperCase()}`;
+    
+    console.log('URL completa:', `${api}?method=${method}&id=${id}`);
+    
+    const response = await fetch(`${api}?method=${method}&id=${id}`);
+    
+    console.log('Respuesta de la API:', response.status, response.statusText);
+    
+    if (response.status !== 200) {
+      const errorText = await response.text();
+      console.error('Error de la API:', errorText);
+      throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
+    }
+    
+    const conteos = await response.json();
+    console.log('Conteos cargados desde API:', conteos);
+    
+    // Limpiar sesiones existentes para este almacén
+    AppState.sesiones[almacen] = [];
+    
+    // Convertir datos de la API al formato interno
+    conteos.forEach((conteo, index) => {
+      const sesion = {
+        id: `api_${conteo.ID}`,
+        numero: conteo.INVENTARIO,
+        registrado: conteo.NOMBRE,
+        inicio: formatearFechaDesdeAPI(conteo.FECHA_INICIO),
+        fin: formatearFechaDesdeAPI(conteo.FECHA_FINAL),
+        tipo: 'API',
+        filas: [],
+        pdfUrl: conteo.LINK_ARCHIVO_PDF,
+        apiId: conteo.ID
+      };
+      
+      AppState.sesiones[almacen].push(sesion);
+    });
+    
+    console.log(`Cargados ${conteos.length} conteos para ${almacen}`);
+    
+    return conteos;
+  } catch (error) {
+    console.error('Error cargando conteos desde API:', error);
+    toast('Error al cargar conteos desde la API', 'error');
+    return [];
+  }
+}
+
+/**
+ * Cargar conteos de Callao desde la API
+ */
+export async function cargarConteosCallao() {
+  try {
+    console.log('Cargando conteos de Callao desde API...');
+    
+    // Mostrar indicador de carga
+    const tbody = $('#list-callao')?.querySelector('tbody');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center"><i class="bi bi-arrow-clockwise spin"></i> Cargando datos desde la API...</td></tr>';
+    }
+    
+    const api = API_URLS.INVENTARIO;
+    const method = API_METHODS.EXTRAER_INVENTARIOS_CONTEOS;
+    const id = "CALLAO";
+    
+    const response = await fetch(`${api}?method=${method}&id=${id}`);
+    
+    if (response.status !== 200) {
+      const errorText = await response.text();
+      throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
+    }
+    
+    const conteos = await response.json();
+    
+    // Limpiar sesiones existentes para Callao
+    AppState.sesiones.callao = [];
+    
+    // Convertir datos de la API al formato interno
+    conteos.forEach((conteo) => {
+      const sesion = {
+        id: `api_${conteo.ID}`,
+        numero: conteo.INVENTARIO,
+        registrado: conteo.NOMBRE,
+        inicio: formatearFechaDesdeAPI(conteo.FECHA_INICIO),
+        fin: formatearFechaDesdeAPI(conteo.FECHA_FINAL),
+        tipo: 'API',
+        filas: [],
+        pdfUrl: conteo.LINK_ARCHIVO_PDF,
+        apiId: conteo.ID
+      };
+      
+      AppState.sesiones.callao.push(sesion);
+    });
+    
+    console.log(`Cargados ${conteos.length} conteos para Callao`);
+    
+    // Mostrar mensaje de éxito
+    if (conteos.length > 0) {
+      toast(`Cargados ${conteos.length} conteos de Callao`, 'success');
+    } else {
+      toast('No se encontraron conteos para Callao', 'info');
+    }
+    
+    return conteos;
+  } catch (error) {
+    console.error('Error cargando conteos de Callao desde API:', error);
+    toast('Error al cargar conteos de Callao desde la API', 'error');
+    
+    // Mostrar mensaje de error en la tabla
+    const tbody = $('#list-callao')?.querySelector('tbody');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger"><i class="bi bi-exclamation-triangle"></i> Error al cargar datos</td></tr>';
+    }
+    
+    return [];
+  }
+}
+
+/**
+ * Cargar conteos de Malvinas desde la API
+ */
+export async function cargarConteosMalvinas() {
+  try {
+    console.log('Cargando conteos de Malvinas desde API...');
+    
+    // Mostrar indicador de carga
+    const tbody = $('#list-malvinas')?.querySelector('tbody');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center"><i class="bi bi-arrow-clockwise spin"></i> Cargando datos desde la API...</td></tr>';
+    }
+    
+    const api = API_URLS.INVENTARIO;
+    const method = API_METHODS.EXTRAER_INVENTARIOS_CONTEOS;
+    const id = "MALVINAS";
+    
+    const response = await fetch(`${api}?method=${method}&id=${id}`);
+    
+    if (response.status !== 200) {
+      const errorText = await response.text();
+      throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
+    }
+    
+    const conteos = await response.json();
+    
+    // Limpiar sesiones existentes para Malvinas
+    AppState.sesiones.malvinas = [];
+    
+    // Convertir datos de la API al formato interno
+    conteos.forEach((conteo) => {
+      const sesion = {
+        id: `api_${conteo.ID}`,
+        numero: conteo.INVENTARIO,
+        registrado: conteo.NOMBRE,
+        inicio: formatearFechaDesdeAPI(conteo.FECHA_INICIO),
+        fin: formatearFechaDesdeAPI(conteo.FECHA_FINAL),
+        tipo: 'API',
+        filas: [],
+        pdfUrl: conteo.LINK_ARCHIVO_PDF,
+        apiId: conteo.ID,
+        tienda: conteo.PUNTO_OPERACION || ''
+      };
+      
+      AppState.sesiones.malvinas.push(sesion);
+    });
+    
+    console.log(`Cargados ${conteos.length} conteos para Malvinas`);
+    
+    // Mostrar mensaje de éxito
+    if (conteos.length > 0) {
+      toast(`Cargados ${conteos.length} conteos de Malvinas`, 'success');
+    } else {
+      toast('No se encontraron conteos para Malvinas', 'info');
+    }
+    
+    return conteos;
+  } catch (error) {
+    console.error('Error cargando conteos de Malvinas desde API:', error);
+    toast('Error al cargar conteos de Malvinas desde la API', 'error');
+    
+    // Mostrar mensaje de error en la tabla
+    const tbody = $('#list-malvinas')?.querySelector('tbody');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger"><i class="bi bi-exclamation-triangle"></i> Error al cargar datos</td></tr>';
+    }
+    
+    return [];
+  }
+}
+
+/**
+ * Obtener ID del punto de operación
+ */
+export function obtenerIdPuntoOperacion(almacen, tienda = null) {
+  if (almacen === 'callao') return '2';
+  
+  // Para Malvinas, obtener el ID de la tienda
+  if (almacen === 'malvinas' && tienda) {
+    const selectTienda = $('#inv-tienda');
+    if (selectTienda) {
+      const selectedOption = selectTienda.selectedOptions[0];
+      const tiendaId = selectedOption?.dataset?.id;
+      if (tiendaId) {
+        console.log('ID de tienda obtenido:', tiendaId);
+        return tiendaId;
+      }
+    }
+    
+    // Fallback al mapeo manual si no se encuentra el ID
+    const mapeoTiendas = {
+      'TIENDA 3006': '3',
+      'TIENDA 3006 B': '4',
+      'TIENDA 3131': '5',
+      'TIENDA 3133': '6',
+      'TIENDA 412-A': '7'
+    };
+    return mapeoTiendas[tienda] || '3';
+  }
+  
+  return '3'; // Fallback por defecto
+}
+
+/**
+ * Cargar datos físicos desde API
+ */
+export async function cargarDatosFisicosDesdeAPI(almacen) {
+  console.log('Cargando datos físicos desde API para:', almacen);
+  
+  if (!AppState.sesionActual?.numero) {
+    throw new Error('No hay inventario activo');
+  }
+  
+  const method = "listar_conteo_punto_operacion";
+  const idInventario = `${AppState.sesionActual.numero}-${almacen}`;
+  const url = `${API_URLS.INVENTARIO}?method=${method}&id=${encodeURIComponent(idInventario)}`;
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!Array.isArray(data)) {
+      console.warn('API no devolvió un array:', data);
+      return [];
+    }
+    
+    // Convertir datos de API al formato esperado
+    const datosFisicos = data.map((item, index) => ({
+      item: index + 1,
+      producto: item.PRODUCTO || '',
+      codigo: item.CODIGO || '',
+      cantidad_fisica: Number(item.TOTAL) || 0,
+      unidad_medida: item.UNIDAD_MEDIDA || 'UNI'
+    })).filter(item => item.codigo);
+    
+    console.log(`Datos físicos cargados para ${almacen}:`, datosFisicos.length, 'productos');
+    
+    return datosFisicos;
+    
+  } catch (error) {
+    console.error('Error cargando datos físicos:', error);
+    
+    if (error.name === 'AbortError') {
+      throw new Error('Timeout: La API tardó más de 30 segundos en responder');
+    } else if (error.message.includes('Failed to fetch')) {
+      throw new Error('Error de conexión: No se pudo conectar con la API');
+    } else {
+      throw new Error(`Error cargando datos físicos: ${error.message}`);
+    }
+  }
+}
+
+/**
+ * Cargar datos de comparación desde API
+ */
+export async function cargarDatosComparacionDesdeAPI(almacen) {
+  console.log('Cargando datos de comparación desde API para:', almacen);
+  
+  if (!AppState.sesionActual?.numero) {
+    throw new Error('No hay inventario activo');
+  }
+  
+  const method = "listar_conteo_punto_operacion";
+  const idInventario = `${AppState.sesionActual.numero}-${almacen}`;
+  const url = `${API_URLS.INVENTARIO}?method=${method}&id=${encodeURIComponent(idInventario)}`;
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!Array.isArray(data)) {
+      console.warn('API no devolvió un array:', data);
+      AppState.sistema[almacen] = [];
+      return;
+    }
+    
+    // Convertir datos de API al formato esperado
+    const datosSistema = data.map((item, index) => ({
+      item: index + 1,
+      producto: item.PRODUCTO || '',
+      codigo: item.CODIGO || '',
+      cantidad_sistema: Number(item.TOTAL) || 0,
+      unidad_medida: item.UNIDAD_MEDIDA || 'UNI'
+    }));
+    
+    // Filtrar solo productos con código
+    const datosFiltrados = datosSistema.filter(item => item.codigo);
+    
+    AppState.sistema[almacen] = datosFiltrados;
+    
+    console.log(`Datos del sistema cargados para ${almacen}:`, datosFiltrados.length, 'productos');
+    
+    // Actualizar UI del botón
+    try {
+      const targetBtn = almacen === 'callao' ? 
+        $('#btn-alm-callao') : 
+        $('#btn-alm-malvinas');
+      
+      if (targetBtn) {
+        const ex = targetBtn.querySelector('.sys-count');
+        if (ex) {
+          ex.textContent = ` (${datosFiltrados.length})`;
+        } else {
+          const s = document.createElement('span');
+          s.className = 'sys-count';
+          s.textContent = ` (${datosFiltrados.length})`;
+          targetBtn.appendChild(s);
+        }
+        targetBtn.classList.add('active-alm');
+        setTimeout(() => targetBtn.classList.remove('active-alm'), 1200);
+      }
+    } catch (uiError) {
+      console.warn('Error actualizando UI:', uiError);
+    }
+    
+  } catch (error) {
+    console.error('Error cargando datos de comparación:', error);
+    
+    if (error.name === 'AbortError') {
+      throw new Error('Timeout: La API tardó más de 30 segundos en responder');
+    } else if (error.message.includes('Failed to fetch')) {
+      throw new Error('Error de conexión: No se pudo conectar con la API');
+    } else {
+      throw new Error(`Error cargando datos: ${error.message}`);
+    }
+  }
+}
+
+// Nota: registrarInventario es una función muy compleja que depende de muchos otros módulos
+// Se migrará en una fase posterior cuando se creen los módulos de componentes (PDF, etc.)
+
