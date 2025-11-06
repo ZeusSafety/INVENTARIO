@@ -85,22 +85,26 @@ INVENTARIO/
 - ✅ `probarConectividadAPIs()`
 - ⏳ `registrarInventario()` - Pendiente (depende de módulos de componentes)
 
-### Fase 3: Vistas (Pendiente)
+### Fase 3: Vistas ✅ (Completado)
 
-**Archivos a crear:**
-- `assets/js/views/callao.js` - Toda la lógica de la vista Callao
-- `assets/js/views/malvinas.js` - Toda la lógica de la vista Malvinas
-- `assets/js/views/comparar.js` - Lógica de comparación
-- `assets/js/views/consolidado.js` - Lógica de consolidado
-- `assets/js/views/registro.js` - Lógica de registro
-- `assets/js/views/proformas.js` - Lógica de proformas
-- `assets/js/views/gerencia.js` - Lógica de gerencia
+**Archivos creados:**
+- ✅ `assets/js/views/callao.js` - Lógica de la vista Callao
+- ✅ `assets/js/views/malvinas.js` - Lógica de la vista Malvinas
+- ✅ `assets/js/views/comparar.js` - Lógica de comparación
+- ✅ `assets/js/views/consolidado.js` - Lógica de consolidado
+- ✅ `assets/js/views/registro.js` - Lógica de registro (básico, algunas funciones pendientes)
+- ✅ `assets/js/views/proformas.js` - Lógica de proformas (básico, algunas funciones pendientes)
+- ✅ `assets/js/views/gerencia.js` - Lógica de gerencia (placeholder)
+- ✅ `assets/js/navigation.js` - Módulo de navegación (showView)
 
-**Funciones a migrar por vista:**
-- Callao: `mostrarTablaInventario('callao')`, `renderPaginaInventario('callao')`, etc.
-- Malvinas: Similar a Callao pero con tiendas
-- Comparar: `cargarYComparar()`, `pintarComparacion()`, etc.
-- Consolidado: `renderConsolidado()`, etc.
+**Funciones migradas:**
+- ✅ Callao: `mostrarTablaInventario()`, `renderPaginaInventario()`, `cambiarPaginaInventario()`, `filterTablaInventario()`, `syncObsYGuardar()`, `actualizarUnidadMedida()`, `renderListado()`
+- ✅ Malvinas: `cargarTiendasMalvinas()`, `getTiendaStatus()`, `renderTiendas()`, `setTiendaStatus()`
+- ✅ Comparar: `cargarYComparar()`, `abrirComparacion()`, `pintarComparacion()`, `setCmpEstado()`, `cmpMostrarTodos()`, `buildCmpSugerencias()`, `showCmpSugerencias()`
+- ✅ Consolidado: `renderConsolidado()`, `cargarStockSistemaConsolidado()`, `cargarStockFisicoConsolidado()`, `padConsolidadoRows()`, `syncConsolidadoRowHeights()`
+- ✅ Registro: `renderRegistro()`, `openRegistroCarpeta()`, `openRegistroDetalle()` (básico)
+- ✅ Proformas: `addLineaProforma()`, `updatePFProductSuggestions()`, `registrarProforma()`, `renderListadoProformas()`, `toggleEstadoProforma()`, `openProformaPDF()` (básico)
+- ✅ Navegación: `showView()`, `openCompararDesdeRegistro()`
 
 ### Fase 4: Componentes (Pendiente)
 
@@ -264,7 +268,9 @@ export default {
 - ✅ Archivos base creados (config, utils, state, CSS)
 - ✅ Módulos de API completados (productos, inventario, colaboradores)
 - ✅ Función toast agregada a utils.js
-- ⏳ Pendiente: Migración de vistas (Fase 3)
+- ✅ Módulos de vistas creados (callao, malvinas, comparar, consolidado, registro, proformas, gerencia)
+- ✅ Módulo de navegación creado
+- ⏳ Pendiente: Funciones que dependen de componentes (PDF, modales) - Fase 4
 - ⏳ Pendiente: Migración de componentes (Fase 4)
 - ⏳ Pendiente: Creación de main.js (Fase 5)
 - ⏳ Pendiente: Actualización de HTML principal (Fase 6)
@@ -272,5 +278,19 @@ export default {
 ---
 
 **Última actualización**: 2025-01-11
-**Versión**: 1.0.0
+**Versión**: 1.1.0
+
+## 📝 Notas de Implementación
+
+### Funciones Pendientes de Fase 2
+- `registrarInventario()` - Depende de módulos de componentes (PDF, archivos) que se crearán en Fase 4
+
+### Funciones Pendientes de Fase 3
+Las siguientes funciones están marcadas como pendientes porque dependen de componentes que se crearán en la Fase 4:
+- Funciones de modales (abrirModalSistemaExcel, abrirInputExcel, etc.)
+- Funciones de PDF (generarPDFConteoBlob, exportComparacionPDF, etc.)
+- Funciones de edición (abrirMenuEditar, accionEditarCantidadDesdeMenu, etc.)
+- Funciones de verificación (editarVerificacion, guardarVerificacion, etc.)
+
+Estas funciones se completarán en la Fase 4 cuando se creen los módulos de componentes correspondientes.
 
