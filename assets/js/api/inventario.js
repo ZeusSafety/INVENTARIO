@@ -468,6 +468,178 @@ export async function cargarDatosComparacionDesdeAPI(almacen) {
   }
 }
 
-// Nota: registrarInventario es una función muy compleja que depende de muchos otros módulos
-// Se migrará en una fase posterior cuando se creen los módulos de componentes (PDF, etc.)
+/**
+ * Registrar inventario completo (generar PDF, subir archivo y guardar en BD)
+ */
+export async function registrarInventario(almacen) {
+  // Obtener última sesión del almacén
+  const sesiones = AppState.sesiones[almacen] || [];
+  const sesion = sesiones[sesiones.length - 1];
+  
+  if (!sesion) {
+    alert('No hay sesión.');
+    return;
+  }
+  
+  // Obtener los productos filtrados
+  const excl = new Set(AppState.filtro.excluirCodigos.map(s => s.trim()).filter(Boolean));
+  let fuente = [...AppState.productos];
+  if (AppState.filtro.ocultarCero) fuente = fuente.filter(p => p.cantidad_sistema > 0);
+  fuente = fuente.filter(p => !excl.has(p.codigo));
+  
+  if (fuente.length === 0) {
+    alert('No hay productos para registrar.');
+    return;
+  }
+  
+  // Crear un mapa de cantidades ingresadas
+  const mapCant = new Map((sesion.filas || []).map(f => [f.codigo, f.cantidad]));
+  
+  // Construir filas finales con todos los productos
+  const filas = [];
+  let faltantes = 0;
+  
+  fuente.forEach(p => {
+    const cantidad = mapCant.has(p.codigo) ? mapCant.get(p.codigo) : 0;
+    if (cantidad === 0 || cantidad === '') faltantes++;
+    
+    filas.push({
+      item: p.item,
+      producto: p.producto,
+      codigo: p.codigo,
+      unidad_medida: p.unidad_medida,
+      cantidad: Number(cantidad || 0),
+      id_producto: p.id
+    });
+  });
+  
+  if (faltantes > 0) {
+    if (!confirm(`Hay ${faltantes} productos sin cantidad registrada. ¿Deseas continuar?`)) return;
+  }
+  
+  // Actualizar sesión local
+  sesion.filas = filas;
+  sesion.fin = fmt12();
+  
+  // Mostrar toast de procesamiento
+  toast('Generando PDF y registrando inventario...', 'info');
+  
+  try {
+    // 1. Generar PDF y obtener blob
+    const { generarPDFConteoBlob } = await import('../components/pdf.js');
+    const pdfBlob = await generarPDFConteoBlob(almacen, sesion);
+    
+    // 2. Subir PDF a la API de archivos
+    const folderBucket = "inventario_conteo";
+    const formData = new FormData();
+    const nombreArchivo = `inventario_${almacen}_${sesion.numero.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`;
+    formData.append('file', pdfBlob, nombreArchivo);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    const responseArchivo = await fetch(`${API_URLS.ARCHIVOS}?folder_bucket=${folderBucket}`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (responseArchivo.status !== 200) {
+      const errorText = await responseArchivo.text();
+      throw new Error(`Error al subir el PDF: ${responseArchivo.status} - ${errorText}`);
+    }
+    
+    const dataArchivo = await responseArchivo.json();
+    const urlArchivo = dataArchivo.url;
+    sesion.pdfUrl = urlArchivo;
+    
+    // 3. Preparar datos para la API de inventario
+    const fechaInicio = convertirFechaToMySQL(sesion.inicio);
+    const fechaFinal = convertirFechaToMySQL(sesion.fin);
+    const idRegistradoPor = sesion.registradoId || await obtenerIdRegistradoPor(sesion.registrado);
+    const idPuntoOperacion = obtenerIdPuntoOperacion(almacen, sesion.tienda);
+    
+    // Obtener el ID del inventario
+    let idInventario;
+    if (AppState.sesionActual?.inventarioId) {
+      idInventario = AppState.sesionActual.inventarioId;
+    } else {
+      idInventario = await obtenerIdInventario(sesion.numero);
+    }
+    
+    // Preparar array de productos
+    const productosParaAPI = filas.map(f => ({
+      id_productos: String(f.id_producto),
+      cantidad: String(f.cantidad || 0),
+      unidad_medida: f.unidad_medida
+    }));
+    
+    const dataInventario = {
+      id_inventario: idInventario,
+      id_punto_operacion: idPuntoOperacion,
+      fecha_inicio: fechaInicio,
+      fecha_final: fechaFinal,
+      registrado_por: idRegistradoPor,
+      url_archivo: urlArchivo,
+      productos: productosParaAPI
+    };
+    
+    // 4. Enviar datos a la API de inventario
+    const method = "insertar_conteo";
+    const urlInventario = `${API_URLS.INVENTARIO}?method=${method}`;
+    
+    const controller2 = new AbortController();
+    const timeoutId2 = setTimeout(() => controller2.abort(), 30000);
+    
+    const responseInventario = await fetch(urlInventario, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dataInventario),
+      signal: controller2.signal
+    });
+    
+    clearTimeout(timeoutId2);
+    
+    if (responseInventario.status !== 200) {
+      const errorText = await responseInventario.text();
+      throw new Error(`Error al registrar el inventario: ${responseInventario.status} - ${errorText}`);
+    }
+    
+    const resultInventario = await responseInventario.json();
+    toast('Inventario registrado correctamente en la base de datos', 'success');
+    
+    // 5. Actualizar interfaz (estas funciones se moverán a las vistas correspondientes)
+    if (typeof window.renderListado === 'function') {
+      window.renderListado(almacen);
+    }
+    if (almacen === 'malvinas' && typeof window.setTiendaStatus === 'function') {
+      window.setTiendaStatus(sesion.tienda, 'listo');
+    }
+    if (typeof window.renderConsolidado === 'function') {
+      window.renderConsolidado();
+    }
+    if (typeof window.renderRegistro === 'function') {
+      window.renderRegistro();
+    }
+    
+  } catch (error) {
+    console.error('Error al registrar inventario:', error);
+    
+    let mensajeError = 'Error desconocido';
+    if (error.name === 'AbortError') {
+      mensajeError = 'Timeout: La operación tardó demasiado tiempo. Verifique su conexión a internet.';
+    } else if (error.message.includes('Failed to fetch')) {
+      mensajeError = 'Error de conexión: No se pudo conectar con el servidor. Verifique su conexión a internet.';
+    } else if (error.message.includes('CORS')) {
+      mensajeError = 'Error CORS: Problema de permisos del navegador.';
+    } else {
+      mensajeError = error.message || 'Error desconocido';
+    }
+    
+    toast('Error al registrar el inventario: ' + mensajeError, 'error');
+    alert('Ocurrió un error al registrar el inventario:\n\n' + mensajeError + '\n\nPor favor, intente nuevamente.');
+  }
+}
 

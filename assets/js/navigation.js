@@ -5,8 +5,8 @@
  */
 
 import { qa, $ } from './utils.js';
-import { cargarConteosCallao } from './api/inventario.js';
-import { cargarTiendasMalvinas, cargarConteosMalvinas } from './views/malvinas.js';
+import { cargarConteosCallao, cargarConteosMalvinas } from './api/inventario.js';
+import { cargarTiendasMalvinas } from './views/malvinas.js';
 import { renderConsolidado } from './views/consolidado.js';
 // Nota: renderRegistro y renderListadoProformas se importarán cuando se creen esos módulos
 
