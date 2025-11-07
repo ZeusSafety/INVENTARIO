@@ -133,6 +133,10 @@ export async function cargarConteosDesdeAPI(idInventario, almacen) {
     });
     
     console.log(`Cargados ${conteos.length} conteos para ${almacen}`);
+
+    if (typeof window.renderListado === 'function') {
+      window.renderListado(almacen);
+    }
     
     return conteos;
   } catch (error) {
@@ -189,6 +193,10 @@ export async function cargarConteosCallao() {
     });
     
     console.log(`Cargados ${conteos.length} conteos para Callao`);
+    
+    if (typeof window.renderListado === 'function') {
+      window.renderListado('callao');
+    }
     
     // Mostrar mensaje de éxito
     if (conteos.length > 0) {
@@ -260,6 +268,10 @@ export async function cargarConteosMalvinas() {
     });
     
     console.log(`Cargados ${conteos.length} conteos para Malvinas`);
+    
+    if (typeof window.renderListado === 'function') {
+      window.renderListado('malvinas');
+    }
     
     // Mostrar mensaje de éxito
     if (conteos.length > 0) {

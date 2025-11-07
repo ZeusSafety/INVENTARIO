@@ -84,12 +84,73 @@
       
       <!-- Vista Callao -->
       <div id="view-callao">
-        <!-- Contenido de la vista Callao -->
+        <section class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+              <h5 class="mb-0">Listado de Conteo – Callao</h5>
+              <div class="d-flex gap-2">
+                <input id="filtro-list-callao" class="form-control form-control-sm" placeholder="Buscar...">
+                <button class="btn btn-outline-primary btn-sm" onclick="cargarConteosCallao()" title="Actualizar datos desde la API">
+                  <i class="bi bi-arrow-clockwise"></i> Actualizar
+                </button>
+                <button class="btn btn-outline-dark btn-sm" onclick="pdfListado('callao')">
+                  <i class="bi bi-file-earmark-pdf"></i> Generar reporte
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm" id="list-callao">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Fecha y Hora (inicio)</th>
+                    <th>N° Inventario</th>
+                    <th>Registrado por</th>
+                    <th>Archivo</th>
+                    <th>Hora Final</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
       </div>
 
       <!-- Vista Malvinas -->
       <div id="view-malvinas" class="invis">
-        <!-- Contenido de la vista Malvinas -->
+        <section class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+              <h5 class="mb-0">Listado de Conteo – Malvinas</h5>
+              <div class="d-flex gap-2">
+                <input id="filtro-list-malvinas" class="form-control form-control-sm" placeholder="Buscar...">
+                <button class="btn btn-outline-primary btn-sm" onclick="cargarConteosMalvinas()" title="Actualizar datos desde la API">
+                  <i class="bi bi-arrow-clockwise"></i> Actualizar
+                </button>
+                <button class="btn btn-outline-dark btn-sm" onclick="pdfListado('malvinas')">
+                  <i class="bi bi-file-earmark-pdf"></i> Generar reporte
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm" id="list-malvinas">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Fecha y Hora (inicio)</th>
+                    <th>N° Inventario</th>
+                    <th>Tienda</th>
+                    <th>Registrado por</th>
+                    <th>Archivo</th>
+                    <th>Hora Final</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
       </div>
 
       <!-- Vista Comparar -->
@@ -120,8 +181,261 @@
   </main>
 
   <!-- Modales -->
-  <!-- Todos los modales del archivo original se mantienen aquí -->
-  <!-- O se pueden mover a archivos HTML separados -->
+  <div class="modal fade" id="modalRegDetalle" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title" id="regdet-title">Detalle</h6>
+          <button type="button" class="btn-close" aria-label="Cerrar" onclick="closeModal('#modalRegDetalle')"></button>
+        </div>
+        <div id="regdet-head" class="px-3 pt-2"></div>
+        <div class="modal-body">
+          <div id="regdet-body"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline-dark" onclick="regdetExportPDFCurrent()"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+          <button class="btn btn-secondary" onclick="closeModal('#modalRegDetalle')">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalAviso" tabindex="-1">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Aviso de Prioridad de Conteo</h6>
+          <button type="button" class="btn-close" onclick="closeModal('#modalAviso')"></button>
+        </div>
+        <div class="modal-body">
+          <div class="p-2">
+            <p class="mb-2">A partir de este momento el inventario está <b>en curso</b>. Toda digitación tiene <b>prioridad operativa</b>.</p>
+            <ul class="mb-2" style="margin-left: 1rem;">
+              <li>Verifique <b>código</b> y <b>descripción</b> del producto antes de registrar.</li>
+              <li>Ingrese la <b>cantidad exacta</b> y confirme visualmente el valor.</li>
+              <li>Evite correcciones repetidas y mantenga <b>concentración</b> durante el conteo.</li>
+              <li>Ante cualquier duda, <b>deténgase</b> y consulte al responsable.</li>
+            </ul>
+            <p class="text-secondary small mb-0">Al continuar usted declara conocer y cumplir el procedimiento.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" onclick="closeModal('#modalAviso')"><i class="bi bi-check2"></i> Entendido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalSesionNumero" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title"><i class="bi bi-clipboard2"></i> Asignar N° Inventario</h6>
+          <button type="button" class="btn-close" onclick="closeModal('#modalSesionNumero')"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2 text-secondary">Ingrese la contraseña del jefe, el N° de inventario y quién autoriza.</div>
+          <input id="sn-pwd" type="password" class="form-control mb-2" placeholder="Contraseña">
+          <input id="sn-num" class="form-control mb-2" placeholder="Ej: INV-2025-214">
+          <div class="form-floating mb-2">
+            <select id="sn-area" class="form-select">
+              <option value="Administración">Administración</option>
+              <option value="Logística">Logística</option>
+              <option value="Otro">Otro</option>
+            </select>
+            <label>Área</label>
+          </div>
+          <div class="form-floating mb-2">
+            <select id="sn-persona" class="form-select">
+              <option value="">Cargando colaboradores...</option>
+            </select>
+            <label>Autorizado por</label>
+          </div>
+          <input id="sn-otro" class="form-control d-none mt-2" placeholder="Especifique nombre">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('#modalSesionNumero')">Cancelar</button>
+          <button class="btn btn-primary" onclick="guardarSesionNumero()"><i class="bi bi-check2"></i> Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalUnirse" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title"><i class="bi bi-link-45deg"></i> Unirse a Inventario</h6>
+          <button type="button" class="btn-close" onclick="closeModal('#modalUnirse')"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2 text-secondary">Selecciona el N° de inventario asignado por el jefe para participar.</div>
+          <div class="form-floating">
+            <select id="join-num" class="form-select">
+              <option value="">Cargando inventarios...</option>
+            </select>
+            <label>N° de Inventario</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('#modalUnirse')">Cancelar</button>
+          <button class="btn btn-primary" onclick="guardarUnirse()"><i class="bi bi-check2"></i> Unirse</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalProcedimiento" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title"><i class="bi bi-journal-text"></i> Procedimientos – Inventario</h6>
+          <button type="button" class="btn-close" onclick="closeModal('#modalProcedimiento')"></button>
+        </div>
+        <div class="modal-body">
+          <div class="proc-sec">
+            <h6><i class="bi bi-info-circle"></i> Instrucciones Generales</h6>
+            <ul>
+              <li>Trabajamos por <b>N° de Inventario</b>. Debe ser asignado antes de registrar.</li>
+              <li>Los datos se guardan localmente; cada equipo puede <b>unirse</b> al mismo número.</li>
+              <li>Valide <b>código</b>, <b>descripción</b> y <b>cantidad</b> antes de confirmar.</li>
+            </ul>
+          </div>
+          <div class="proc-sec">
+            <h6><i class="bi bi-clipboard2"></i> Asignar N° Inventario</h6>
+            <ul>
+              <li>Ubicación: botón <b>Asignar N°</b> en la barra superior.</li>
+              <li>Campos: Contraseña del jefe, N° de inventario, Área y Autorizado.</li>
+              <li>Resultado: crea la sesión y habilita el registro en ambos almacenes.</li>
+            </ul>
+          </div>
+          <div class="proc-sec">
+            <h6><i class="bi bi-link-45deg"></i> Unirse a Inventario</h6>
+            <ul>
+              <li>Disponible para equipos adicionales.</li>
+              <li>Selecciona el N° asignado y sincroniza los conteos.</li>
+              <li>Si el inventario está cerrado, no se podrán crear nuevos conteos.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="guardarProcedimiento()">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalInventario" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-clipboard2-check"></i> Datos de Inventario</h5>
+          <button class="btn-close" onclick="closeModal('#modalInventario')"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="form-floating">
+                <input id="inv-numero" class="form-control" placeholder="N° Inventario">
+                <label>Número de Inventario</label>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="form-floating">
+                <select id="inv-registrado" class="form-select">
+                  <option>Joseph</option>
+                  <option>Joselyn</option>
+                  <option>Manuel</option>
+                  <option>Otro</option>
+                </select>
+                <label>Registrado por</label>
+              </div>
+              <input id="inv-otro" class="form-control mt-2 d-none" placeholder="Especifique nombre">
+            </div>
+            <div class="col-md-4">
+              <div class="form-floating">
+                <input id="inv-inicio" class="form-control" placeholder="Inicio" disabled>
+                <label>Fecha y Hora (inicio)</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                <select id="inv-almacen" class="form-select" disabled>
+                  <option value="callao">Callao</option>
+                  <option value="malvinas">Malvinas</option>
+                </select>
+                <label>Almacén</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                <select id="inv-tipo" class="form-select" disabled>
+                  <option value="general">General</option>
+                  <option value="emergencia">Emergencia</option>
+                  <option value="reconteo">Reconteo</option>
+                </select>
+                <label>Tipo de Conteo</label>
+              </div>
+            </div>
+            <div class="col-md-12 d-none" id="bloque-tiendas">
+              <div class="form-floating">
+                <select id="inv-tienda" class="form-select">
+                  <option value="">Seleccione una tienda...</option>
+                </select>
+                <label>Tienda</label>
+              </div>
+              <div class="mini-hint mt-2 text-secondary small">Las tiendas se cargan automáticamente desde la API.</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('#modalInventario')">Cancelar</button>
+          <button class="btn btn-primary" onclick="guardarModalInventario()"><i class="bi bi-check2"></i> Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalObs" tabindex="-1">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title"><i class="bi bi-eye"></i> Observaciones</h6>
+          <button type="button" class="btn-close" onclick="closeModal('#modalObs')"></button>
+        </div>
+        <div class="modal-body">
+          <div id="obs-contenido" class="text-secondary"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalSistemaExcel" tabindex="-1" aria-labelledby="modalSistemaExcelLabel" aria-hidden="true" role="dialog">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title" id="modalSistemaExcelLabel"><i class="bi bi-file-earmark-excel"></i> Sistema de Inventario - <span id="modal-sistema-almacen"></span></h6>
+          <button type="button" class="btn-close" aria-label="Cerrar" onclick="cerrarModalCompletamente()"></button>
+        </div>
+        <div class="modal-body">
+          <div class="d-grid gap-2">
+            <button class="btn btn-primary" onclick="extraerConteosGuardados()">
+              <i class="bi bi-download"></i> Extraer Conteos Guardados
+            </button>
+            <button class="btn btn-success" onclick="abrirInputExcel()">
+              <i class="bi bi-upload"></i> Adjuntar Excel
+            </button>
+          </div>
+          <input type="file" id="input-excel-sistema" accept=".json,.csv,.xlsx,.xls" class="d-none" onchange="cargarSistema(event)">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="cerrarModalCompletamente()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-backdrop" class="modal-backdrop fade" style="display: none;"></div>
 
   <!-- JavaScript Modulares (usando ES6 Modules) -->
   <script type="module" src="assets/js/main.js"></script>

@@ -12,6 +12,7 @@ import { API_URLS } from './config.js';
 // Importar módulos de API
 import { cargarProductosDesdeAPI, actualizarBadgeProductos } from './api/productos.js';
 import { probarConectividadAPIs } from './api/colaboradores.js';
+import { cargarConteosCallao, cargarConteosMalvinas } from './api/inventario.js';
 
 // Importar módulos de navegación
 import { showView } from './navigation.js';
@@ -171,6 +172,8 @@ window.renderListado = (almacen) => {
     renderListadoCallao(almacen);
   }
 };
+window.cargarConteosCallao = cargarConteosCallao;
+window.cargarConteosMalvinas = cargarConteosMalvinas;
 
 // Manejo global de errores
 window.addEventListener('error', (e) => {

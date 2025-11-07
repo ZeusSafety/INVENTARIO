@@ -407,13 +407,14 @@ export function validarModalInventario() {
   }
   
   if (inventarioCtx.almacen === 'malvinas') {
-    const sel = qa('input[name="inv-tienda"]:checked')[0];
-    if (!sel) {
+    const sel = $('inv-tienda');
+    const tienda = sel?.value || '';
+    if (!tienda) {
       alert('Seleccione una tienda.');
       ok = false;
     } else {
       const yaRegistrada = (AppState.sesiones.malvinas || []).some(s =>
-        s && s.fin && s.tienda === sel.value
+        s && s.fin && s.tienda === tienda
       );
       if (yaRegistrada) {
         alert('La tienda seleccionada ya fue registrada.');
@@ -444,8 +445,7 @@ export function guardarModalInventario() {
   let tienda = null;
   
   if (almacen === 'malvinas') {
-    const sel = qa('input[name="inv-tienda"]:checked')[0];
-    if (sel) tienda = sel.value;
+    tienda = $('inv-tienda')?.value || null;
   }
   
   // Crear nueva sesión
