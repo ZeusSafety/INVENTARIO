@@ -58,7 +58,10 @@
   <!-- Contenido Principal -->
   <main class="main-content">
     <header class="main-header">
-      <div class="header-left">
+      <div class="header-left d-flex align-items-center gap-2">
+        <button id="sidebarToggle" class="btn btn-outline-secondary btn-icon" type="button" aria-label="Alternar navegación">
+          <i class="bi bi-list"></i>
+        </button>
         <div id="sesion-banner-global"></div>
       </div>
       <div class="header-right">
@@ -84,11 +87,62 @@
       
       <!-- Vista Callao -->
       <div id="view-callao">
-        <section class="card">
+        <header class="view-header">
+          <h1><i class="bi bi-building"></i>Almacén Callao</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary-soft" onclick="openInventarioModal('callao','cajas')">
+              <i class="bi bi-box-seam"></i> Conteo por Cajas
+            </button>
+            <button class="btn btn-primary-soft" onclick="openInventarioModal('callao','stand')">
+              <i class="bi bi-columns-gap"></i> Conteo de Stand
+            </button>
+          </div>
+        </header>
+
+        <div id="panel-callao" class="invis">
+          <div class="card mb-3">
+            <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div>
+                <div class="fw-bold">Inventario actual: <span id="callao-numero"></span></div>
+                <div class="mini-hint">Registrado por: <span id="callao-registrado"></span> · Inicio: <span id="callao-inicio"></span></div>
+              </div>
+              <div class="d-flex gap-2 flex-wrap">
+                <input id="emg-callao" type="file" accept=".xlsx,.xls,.csv" class="d-none" onchange="onEmergFileChange('callao', this)">
+                <button class="btn btn-warning" onclick="dispararEmergencia('callao')"><i class="bi bi-file-earmark-arrow-up"></i> Subir (Emergencia)</button>
+                <button class="btn btn-success" id="btnStartCallao" onclick="mostrarTablaInventario('callao')"><i class="bi bi-play-circle"></i> Empezar Inventario</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="tabla-callao" class="card invis">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm align-middle" id="tbl-callao">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Producto</th>
+                      <th>Código</th>
+                      <th>Cantidad</th>
+                      <th>Unidad de Medida</th>
+                      <th>Observaciones</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div class="d-flex justify-content-end gap-2 mt-3">
+                <button class="btn btn-primary" onclick="registrarInventario('callao')"><i class="bi bi-check2-circle"></i> Registrar Inventario</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
           <div class="card-body">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
               <h5 class="mb-0">Listado de Conteo – Callao</h5>
-              <div class="d-flex gap-2">
+              <div class="d-flex gap-2 flex-wrap">
                 <input id="filtro-list-callao" class="form-control form-control-sm" placeholder="Buscar...">
                 <button class="btn btn-outline-primary btn-sm" onclick="cargarConteosCallao()" title="Actualizar datos desde la API">
                   <i class="bi bi-arrow-clockwise"></i> Actualizar
@@ -114,16 +168,74 @@
               </table>
             </div>
           </div>
-        </section>
+        </div>
       </div>
 
       <!-- Vista Malvinas -->
       <div id="view-malvinas" class="invis">
-        <section class="card">
+        <header class="view-header">
+          <h1><i class="bi bi-shop"></i>Almacén Malvinas</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary-soft" onclick="openInventarioModal('malvinas','cajas')">
+              <i class="bi bi-box-seam"></i> Conteo por Cajas
+            </button>
+            <button class="btn btn-primary-soft" onclick="openInventarioModal('malvinas','stand')">
+              <i class="bi bi-columns-gap"></i> Conteo de Stand
+            </button>
+          </div>
+        </header>
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="fw-bold mb-2">Estado de Tiendas</div>
+            <div id="status-tiendas" class="d-flex flex-wrap gap-3"></div>
+          </div>
+        </div>
+
+        <div id="panel-malvinas" class="invis">
+          <div class="card mb-3">
+            <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div>
+                <div class="fw-bold">Inventario actual: <span id="malvinas-numero"></span></div>
+                <div class="mini-hint">Registrado por: <span id="malvinas-registrado"></span> · Inicio: <span id="malvinas-inicio"></span> · Tienda: <span id="malvinas-tienda"></span></div>
+              </div>
+              <div class="d-flex gap-2 flex-wrap">
+                <input id="emg-malvinas" type="file" accept=".xlsx,.xls,.csv" class="d-none" onchange="onEmergFileChange('malvinas', this)">
+                <button class="btn btn-warning" onclick="dispararEmergencia('malvinas')"><i class="bi bi-file-earmark-arrow-up"></i> Subir (Emergencia)</button>
+                <button class="btn btn-success" id="btnStartMalvinas" onclick="mostrarTablaInventario('malvinas')"><i class="bi bi-play-circle"></i> Empezar Inventario</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="tabla-malvinas" class="card invis">
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-sm align-middle" id="tbl-malvinas">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Producto</th>
+                      <th>Código</th>
+                      <th>Cantidad</th>
+                      <th>Unidad de Medida</th>
+                      <th>Observaciones</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div class="d-flex justify-content-end gap-2 my-3">
+                <button class="btn btn-primary" onclick="registrarInventario('malvinas')"><i class="bi bi-check2-circle"></i> Registrar Inventario</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4">
           <div class="card-body">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
               <h5 class="mb-0">Listado de Conteo – Malvinas</h5>
-              <div class="d-flex gap-2">
+              <div class="d-flex gap-2 flex-wrap">
                 <input id="filtro-list-malvinas" class="form-control form-control-sm" placeholder="Buscar...">
                 <button class="btn btn-outline-primary btn-sm" onclick="cargarConteosMalvinas()" title="Actualizar datos desde la API">
                   <i class="bi bi-arrow-clockwise"></i> Actualizar
@@ -150,7 +262,7 @@
               </table>
             </div>
           </div>
-        </section>
+        </div>
       </div>
 
       <!-- Vista Comparar -->

@@ -12,7 +12,7 @@ import { API_URLS } from './config.js';
 // Importar módulos de API
 import { cargarProductosDesdeAPI, actualizarBadgeProductos } from './api/productos.js';
 import { probarConectividadAPIs } from './api/colaboradores.js';
-import { cargarConteosCallao, cargarConteosMalvinas } from './api/inventario.js';
+import { cargarConteosCallao, cargarConteosMalvinas, registrarInventario } from './api/inventario.js';
 
 // Importar módulos de navegación
 import { showView } from './navigation.js';
@@ -78,6 +78,19 @@ function configurarEventListeners() {
       }
     });
   });
+
+  const toggleBtn = $('#sidebarToggle');
+  if (toggleBtn) {
+    const icon = toggleBtn.querySelector('i');
+    if (icon) icon.className = 'bi bi-chevron-double-left';
+    toggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('sidebar-collapsed');
+      const collapsed = document.body.classList.contains('sidebar-collapsed');
+      if (icon) {
+        icon.className = collapsed ? 'bi bi-list' : 'bi bi-chevron-double-left';
+      }
+    });
+  }
   
   // Event listener para cerrar modales con ESC
   document.addEventListener('keydown', async (e) => {
@@ -162,6 +175,7 @@ window.renderConsolidado = renderConsolidado;
 window.renderRegistro = renderRegistro;
 window.renderListadoProformas = renderListadoProformas;
 window.renderGerencia = renderGerencia;
+window.registrarInventario = registrarInventario;
 
 // Exportar funciones de vistas para uso global
 window.renderListado = (almacen) => {

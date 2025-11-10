@@ -5,8 +5,9 @@
  */
 
 import { AppState } from '../state.js';
-import { $, qa, toast } from '../utils.js';
+import { $, qa, toast, normalizarClave, leerArchivoGenerico } from '../utils.js';
 import { cargarConteosCallao } from '../api/inventario.js';
+import { CONFIG } from '../config.js';
 // Nota: renderListado y pdfListado se moverán a components/tables.js en Fase 4
 // Nota: registrarInventario se completará cuando se migre de Fase 2
 
@@ -338,6 +339,91 @@ export function renderListado(almacen) {
   });
 }
 
+export async function onEmergFileChange(almacen, input) {
+  try {
+    const file = input.files?.[0];
+    if (!file) return;
+    const datos = await leerArchivoGenerico(file);
+    aplicarCargaEmergencia(almacen, datos);
+    toast('Archivo de emergencia procesado.', 'success');
+    input.value = '';
+  } catch (err) {
+    alert('Error emergencia: ' + err.message);
+  }
+}
+
+export function dispararEmergencia(almacen) {
+  const pass = prompt('Contraseña de emergencia');
+  if (pass !== CONFIG.JEFE_PWD) {
+    alert('Contraseña incorrecta');
+    return;
+  }
+  const inp = $('emg-' + almacen);
+  if (!inp) return;
+  const prevClass = inp.className;
+  const { position, left, width, height, opacity, zIndex } = inp.style;
+  inp.classList.remove('d-none');
+  inp.style.position = 'fixed';
+  inp.style.left = '-9999px';
+  inp.style.width = '1px';
+  inp.style.height = '1px';
+  inp.style.opacity = '0';
+  inp.style.zIndex = '-1';
+  inp.click();
+  setTimeout(() => {
+    inp.className = prevClass;
+    inp.style.position = position;
+    inp.style.left = left;
+    inp.style.width = width;
+    inp.style.height = height;
+    inp.style.opacity = opacity;
+    inp.style.zIndex = zIndex;
+  }, 0);
+  setTimeout(() => {
+    if (!inp.files || inp.files.length === 0) {
+      toast('Operación cancelada. No se seleccionó archivo.', 'info');
+    }
+  }, 800);
+}
+
+export function aplicarCargaEmergencia(almacen, datos) {
+  const sesion = ultimoInventario(almacen);
+  if (!sesion) {
+    alert('Primero crea una sesión de inventario.');
+    return;
+  }
+  const normalizeCode = (c) => String(c || '').trim();
+  const mapaCantidades = {};
+  (datos || []).forEach(registro => {
+    const map = {};
+    Object.keys(registro || {}).forEach(k => {
+      map[normalizarClave(k)] = registro[k];
+    });
+    const codigo = normalizeCode((map.codigo ?? map.cod ?? map.sku ?? map.codigo_producto ?? map.codigo_interno ?? map.codigo_zeus) || '');
+    const cantidad = Number(map.cantidad ?? map.cant ?? map.cantidad_fisica ?? map.stock ?? map.existencia ?? map.cantidadtotal ?? map.cantidad_total ?? 0);
+    if (codigo) {
+      mapaCantidades[codigo] = cantidad;
+    }
+  });
+  if (!Array.isArray(sesion.filas) || sesion.filas.length === 0) {
+    sesion.filas = (AppState.productos || []).map(p => ({
+      item: p.item,
+      producto: p.producto,
+      codigo: normalizeCode(p.codigo),
+      unidad_medida: p.unidad_medida,
+      cantidad: Number(mapaCantidades[normalizeCode(p.codigo)] || 0)
+    }));
+  } else {
+    sesion.filas.forEach(fila => {
+      const codigoFila = normalizeCode(fila.codigo);
+      if (mapaCantidades[codigoFila] != null) {
+        fila.cantidad = Number(mapaCantidades[codigoFila]) || 0;
+      }
+    });
+  }
+  mostrarTablaInventario(almacen);
+}
+
 // Exportar funciones para uso global (temporal hasta que se cree main.js)
 window.mostrarTablaInventario = mostrarTablaInventario;
 window.renderPaginaInventario = renderPaginaInventario;
@@ -346,4 +432,7 @@ window.filterTablaInventario = filterTablaInventario;
 window.syncObsYGuardar = syncObsYGuardar;
 window.actualizarUnidadMedida = actualizarUnidadMedida;
 window.renderListado = renderListado;
+window.onEmergFileChange = onEmergFileChange;
+window.dispararEmergencia = dispararEmergencia;
+window.aplicarCargaEmergencia = aplicarCargaEmergencia;
 
