@@ -5,12 +5,194 @@
  */
 
 import { AppState, cmpFiltroTxt, cmpEstado, setCmpFiltroTxt, setCmpEstado as setCmpEstadoState } from '../state.js';
-import { $, fmt12, debounce } from '../utils.js';
+import { $, fmt12, debounce, toast, normalizarClave, leerArchivoGenerico, toNumberSafe } from '../utils.js';
 import { cargarDatosFisicosDesdeAPI } from '../api/inventario.js';
 import { renderConsolidado } from './consolidado.js';
+import { openModal, closeModal, limpiarTodosLosBackdrops } from '../components/modals.js';
+import { API_URLS } from '../config.js';
 
 // Variable global para almacenar el almacén seleccionado en el modal
 export let almacenModalSistema = null;
+
+function actualizarBotonSistema(almacen) {
+  const cnt = (AppState.sistema[almacen] || []).length;
+  const btn = document.getElementById(almacen === 'callao' ? 'btn-alm-callao' : 'btn-alm-malvinas');
+  if (!btn) return;
+  let badge = btn.querySelector('.sys-count');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'sys-count';
+    btn.appendChild(badge);
+  }
+  badge.textContent = ` (${cnt})`;
+  btn.classList.add('active-alm');
+  setTimeout(() => btn.classList.remove('active-alm'), 1200);
+}
+
+export function abrirModalSistemaExcel(almacen) {
+  almacenModalSistema = almacen;
+  const span = $('modal-sistema-almacen');
+  if (span) span.textContent = almacen === 'callao' ? 'CALLAO' : 'MALVINAS';
+  const input = $('input-excel-sistema');
+  if (input) {
+    input.value = '';
+    input.dataset.almacen = almacen;
+  }
+  openModal('#modalSistemaExcel');
+}
+
+export function abrirInputExcel() {
+  const input = $('input-excel-sistema');
+  if (!input) {
+    alert('No se encontró el campo para adjuntar el archivo.');
+    return;
+  }
+  if (almacenModalSistema) {
+    input.dataset.almacen = almacenModalSistema;
+  }
+  input.click();
+}
+
+export function cerrarOverlayEmergenciaSistema() {
+  const overlay = document.getElementById('overlay-sistema-excel');
+  if (overlay) overlay.remove();
+}
+
+export function cerrarModalCompletamente() {
+  closeModal('#modalSistemaExcel');
+  limpiarTodosLosBackdrops();
+  cerrarOverlayEmergenciaSistema();
+  const input = $('input-excel-sistema');
+  if (input) {
+    input.value = '';
+    delete input.dataset.almacen;
+  }
+}
+
+export async function extraerConteosGuardados() {
+  if (!almacenModalSistema) {
+    alert('Selecciona un almacén antes de extraer los datos.');
+    return;
+  }
+
+  if (!AppState.sesionActual?.inventarioId) {
+    alert('No hay inventario activo. Debe unirse a un inventario primero.');
+    cerrarModalCompletamente();
+    return;
+  }
+
+  try {
+    const idTipoAlmacen = almacenModalSistema === 'callao' ? '2' : '1';
+    const id = `${AppState.sesionActual.inventarioId}-${idTipoAlmacen}`;
+    const response = await fetch(`${API_URLS.INVENTARIO}?method=stock_sistema_excel&id=${encodeURIComponent(id)}`);
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Error HTTP ${response.status}: ${text}`);
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      toast('No se encontraron conteos guardados para este inventario.', 'info');
+      cerrarModalCompletamente();
+      return;
+    }
+
+    AppState.sistema[almacenModalSistema] = data.map((item, index) => ({
+      item: index + 1,
+      producto: item.PRODUCTO || '',
+      codigo: item.CODIGO || '',
+      cantidad_sistema: Number(item.CANTIDAD) || 0
+    })).filter(x => x.codigo);
+
+    toast(`Conteos cargados: ${AppState.sistema[almacenModalSistema].length} productos.`, 'success');
+    actualizarBotonSistema(almacenModalSistema);
+    cerrarModalCompletamente();
+  } catch (error) {
+    console.error('Error extrayendo conteos guardados:', error);
+    alert('Error al extraer conteos guardados: ' + error.message);
+  }
+}
+
+export async function cargarSistema(e) {
+  let almacen = e?.target?.dataset?.almacen || almacenModalSistema;
+  if (!almacen) almacen = 'callao';
+
+  if (!AppState.sesionActual?.inventarioId) {
+    alert('No hay inventario activo. Debe unirse a un inventario primero.');
+    cerrarModalCompletamente();
+    return;
+  }
+
+  try {
+    const file = e?.target?.files?.[0];
+    if (!file) {
+      cerrarModalCompletamente();
+      return;
+    }
+
+    const arr = await leerArchivoGenerico(file);
+    const datosProcesados = (arr || []).map((r, i) => {
+      const m = {};
+      Object.keys(r || {}).forEach(k => {
+        m[normalizarClave(k)] = r[k];
+      });
+      const item = toNumberSafe(m.item ?? i + 1) || (i + 1);
+      const producto = (m.producto ?? m.nombre ?? m.nombre_producto ?? m.descripcion ?? m.descripcion_producto ?? m.detalle ?? m.detalle_producto ?? m.desc) || '';
+      const codigo = (m.codigo ?? m.cod ?? m.code ?? m.sku ?? m.codigo_producto ?? m.codigo_interno ?? m.codigo_zeus ?? m.codigo_item ?? m.codigoitem ?? '').toString().trim();
+      const cantidadSistema = toNumberSafe(m.cantidad_sistema ?? m.cantidad_sis ?? m.sistema ?? m.stock ?? m.cantidad ?? m.existencia ?? m.cantidadtotal ?? m.cantidad_total ?? m.qty ?? 0);
+      return { item, producto, codigo, cantidad_sistema: cantidadSistema };
+    }).filter(x => x.codigo);
+
+    AppState.sistema[almacen] = datosProcesados;
+
+    try {
+      const method = 'conteo_sistema_inventario_excel';
+      const idTipoAlmacen = almacen === 'callao' ? '2' : '1';
+      const payload = {
+        id_inventario: String(AppState.sesionActual.inventarioId),
+        id_tipo_almacen: idTipoAlmacen,
+        detalle: datosProcesados.map(item => ({
+          producto: item.producto || '',
+          cantidad: String(item.cantidad_sistema || 0),
+          codigo: item.codigo || ''
+        }))
+      };
+
+      const response = await fetch(`${API_URLS.INVENTARIO}?method=${method}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Error HTTP ${response.status}: ${text}`);
+      }
+
+      await response.json();
+      toast(`Sistema (${almacen}) guardado en la base de datos.`, 'success');
+    } catch (apiError) {
+      console.error('Error enviando datos del sistema:', apiError);
+      toast('Archivo cargado localmente, pero no se pudo guardar en la API: ' + apiError.message, 'warning');
+    }
+
+    toast(`Archivo de sistema (${almacen}) cargado: ${datosProcesados.length} filas.`, 'success');
+    actualizarBotonSistema(almacen);
+  } catch (err) {
+    alert('Error al leer archivo del sistema: ' + err.message);
+  } finally {
+    cerrarModalCompletamente();
+    if (e?.target) {
+      e.target.value = '';
+      delete e.target.dataset.almacen;
+    }
+  }
+}
+
+export function toggleCmpEstado(target) {
+  const next = cmpEstado === target ? 'ALL' : target;
+  setCmpEstado(next);
+}
 
 /**
  * Cargar y comparar inventario para un almacén
@@ -338,16 +520,11 @@ window.setCmpEstado = setCmpEstado;
 window.cmpMostrarTodos = cmpMostrarTodos;
 window.showCmpSugerencias = showCmpSugerencias;
 window.debounceCmp = debounceCmp;
-
-// Nota: Las siguientes funciones se moverán a components/modals.js en Fase 4:
-// - abrirModalSistemaExcel
-// - abrirInputExcel
-// - extraerConteosGuardados
-// - cargarSistema
-// - abrirMenuEditar
-// - accionEditarCantidadDesdeMenu
-// - accionEditarSistemaDesdeMenu
-// - accionEditarVerificacionDesdeMenu
-// - exportComparacionPDF
-// - exportComparacionExcel
+window.toggleCmpEstado = toggleCmpEstado;
+window.abrirModalSistemaExcel = abrirModalSistemaExcel;
+window.abrirInputExcel = abrirInputExcel;
+window.extraerConteosGuardados = extraerConteosGuardados;
+window.cargarSistema = cargarSistema;
+window.cerrarModalCompletamente = cerrarModalCompletamente;
+window.cerrarOverlayEmergenciaSistema = cerrarOverlayEmergenciaSistema;
 

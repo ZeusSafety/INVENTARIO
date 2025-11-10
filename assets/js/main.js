@@ -27,6 +27,7 @@ import { renderConsolidado } from './views/consolidado.js';
 import { renderRegistro } from './views/registro.js';
 import { renderListadoProformas } from './views/proformas.js';
 import { renderGerencia } from './views/gerencia.js';
+import './views/comparar.js';
 
 /**
  * Inicializar la aplicación cuando el DOM esté listo

@@ -267,7 +267,92 @@
 
       <!-- Vista Comparar -->
       <div id="view-comparar" class="invis">
-        <!-- Contenido de la vista Comparar -->
+        <header class="view-header">
+          <h1><i class="bi bi-arrow-left-right"></i>Comparación de Inventario</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary-soft mb-0" onclick="abrirModalSistemaExcel('callao')">
+              <i class="bi bi-upload"></i> Subir Sistema Callao
+            </button>
+            <button id="btn-alm-callao" class="btn btn-primary" onclick="cargarYComparar('callao')"><i class="bi bi-building"></i> Almacén Callao</button>
+            <button class="btn btn-primary-soft mb-0 ms-2" onclick="abrirModalSistemaExcel('malvinas')">
+              <i class="bi bi-upload"></i> Subir Sistema Malvinas
+            </button>
+            <button id="btn-alm-malvinas" class="btn btn-primary" onclick="cargarYComparar('malvinas')"><i class="bi bi-shop"></i> Almacén Malvinas</button>
+          </div>
+        </header>
+
+        <div id="panel-comparacion" class="invis">
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="d-flex align-items-center gap-3 flex-wrap mb-2">
+                <div class="d-flex align-items-center gap-1"><span class="text-secondary small">Almacén:</span><b id="cmp-almacen"></b></div>
+                <div class="d-flex align-items-center gap-1"><span class="text-secondary small">Inventario:</span><b id="cmp-numero"></b></div>
+                <div class="d-flex align-items-center gap-1"><span class="text-secondary small">Fecha:</span><b id="cmp-fecha"></b></div>
+              </div>
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="btn-group me-1">
+                  <button class="btn btn-outline-dark btn-sm" onclick="exportComparacionPDF()"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+                  <button class="btn btn-success btn-sm" onclick="exportComparacionExcel()"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+                </div>
+                <div class="cmp-search-wrap">
+                  <input id="cmp-search" class="form-control form-control-sm" placeholder="Buscar código o producto..." oninput="debounceCmp()" />
+                  <div id="cmp-suggest" class="cmp-suggest d-none"></div>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="cmpMostrarTodos()">Todos</button>
+                <span id="cmp-badge-ok" class="badge text-bg-success badge-click" onclick="toggleCmpEstado('OK')">Correctos: <span id="cmp-correctos">0</span></span>
+                <span id="cmp-badge-bad" class="badge text-bg-danger badge-click" onclick="toggleCmpEstado('BAD')">Incorrectos: <span id="cmp-incorrectos">0</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle" id="tbl-comparacion">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Producto</th>
+                  <th>Código</th>
+                  <th>Cantidad Sistema</th>
+                  <th>Cantidad Física</th>
+                  <th>Resultado</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="card mt-4">
+            <div class="card-body">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h5 class="mb-0">Listado de Acciones</h5>
+                <div class="d-flex gap-2">
+                  <input id="filtro-acciones" class="form-control form-control-sm" placeholder="Buscar...">
+                  <button class="btn btn-outline-dark btn-sm" onclick="pdfAcciones()"><i class="bi bi-file-earmark-pdf"></i> Reporte PDF</button>
+                </div>
+              </div>
+              <div class="table-responsive mt-2">
+                <table class="table table-sm" id="tbl-acciones">
+                  <thead>
+                    <tr>
+                      <th>Item/Producto</th>
+                      <th>Fecha y Hora</th>
+                      <th>Registrado por</th>
+                      <th>Almacén</th>
+                      <th>Motivo</th>
+                      <th>Cantidad</th>
+                      <th>Error de</th>
+                      <th>Tipo</th>
+                      <th>Observaciones</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Vista Consolidado -->
