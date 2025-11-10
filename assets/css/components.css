@@ -14,10 +14,31 @@
   transition: width 0.3s ease, padding 0.3s ease, flex-basis 0.3s ease;
 }
 
+.sidebar.is-collapsed,
+body.sidebar-collapsed .sidebar {
+  width: 0;
+  flex: 0 0 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-right: none;
+  overflow: hidden;
+  min-width: 0;
+}
+
 .sidebar .sidebar-header,
 .sidebar .nav-links,
 .sidebar .sidebar-footer {
   transition: opacity 0.2s ease;
+}
+
+.sidebar.is-collapsed .sidebar-header,
+.sidebar.is-collapsed .nav-links,
+.sidebar.is-collapsed .sidebar-footer,
+body.sidebar-collapsed .sidebar .sidebar-header,
+body.sidebar-collapsed .sidebar .nav-links,
+body.sidebar-collapsed .sidebar .sidebar-footer {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .sidebar-header {
@@ -254,23 +275,6 @@
 
 .modal-footer {
   border-top-color: var(--border-color);
-}
-
-body.sidebar-collapsed .sidebar {
-  width: 0;
-  flex: 0 0 0;
-  padding-left: 0;
-  padding-right: 0;
-  border-right: none;
-  overflow: hidden;
-  min-width: 0;
-}
-
-body.sidebar-collapsed .sidebar .sidebar-header,
-body.sidebar-collapsed .sidebar .nav-links,
-body.sidebar-collapsed .sidebar .sidebar-footer {
-  opacity: 0;
-  pointer-events: none;
 }
 
 body.sidebar-collapsed .main-content {

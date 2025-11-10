@@ -6,7 +6,7 @@
 
 // Importar módulos principales
 import { AppState } from './state.js';
-import { $, qa, toast } from './utils.js';
+import { $, qa, q, toast } from './utils.js';
 import { API_URLS } from './config.js';
 
 // Importar módulos de API
@@ -64,6 +64,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+function applySidebarState(collapsed) {
+  const sidebar = q('.sidebar');
+  const icon = $('#sidebarToggle')?.querySelector('i');
+  if (collapsed) {
+    document.body.classList.add('sidebar-collapsed');
+  } else {
+    document.body.classList.remove('sidebar-collapsed');
+  }
+  if (sidebar) {
+    sidebar.classList.toggle('is-collapsed', collapsed);
+  }
+  if (icon) {
+    icon.className = collapsed ? 'bi bi-list' : 'bi bi-chevron-double-left';
+  }
+}
+
+function toggleSidebar(forceState) {
+  let collapsed;
+  if (typeof forceState === 'boolean') {
+    collapsed = forceState;
+  } else {
+    collapsed = !document.body.classList.contains('sidebar-collapsed');
+  }
+  applySidebarState(collapsed);
+}
+
 /**
  * Configurar event listeners globales
  */
@@ -79,18 +105,7 @@ function configurarEventListeners() {
     });
   });
 
-  const toggleBtn = $('#sidebarToggle');
-  if (toggleBtn) {
-    const icon = toggleBtn.querySelector('i');
-    if (icon) icon.className = 'bi bi-chevron-double-left';
-    toggleBtn.addEventListener('click', () => {
-      document.body.classList.toggle('sidebar-collapsed');
-      const collapsed = document.body.classList.contains('sidebar-collapsed');
-      if (icon) {
-        icon.className = collapsed ? 'bi bi-list' : 'bi bi-chevron-double-left';
-      }
-    });
-  }
+  applySidebarState(document.body.classList.contains('sidebar-collapsed'));
   
   // Event listener para cerrar modales con ESC
   document.addEventListener('keydown', async (e) => {
@@ -176,6 +191,7 @@ window.renderRegistro = renderRegistro;
 window.renderListadoProformas = renderListadoProformas;
 window.renderGerencia = renderGerencia;
 window.registrarInventario = registrarInventario;
+window.toggleSidebar = toggleSidebar;
 
 // Exportar funciones de vistas para uso global
 window.renderListado = (almacen) => {
