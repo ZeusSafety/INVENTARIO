@@ -436,12 +436,153 @@
 
       <!-- Vista Registro -->
       <div id="view-registro" class="invis">
-        <!-- Contenido de la vista Registro -->
+        <header class="view-header">
+          <h1><i class="bi bi-archive"></i>Registro de Inventarios</h1>
+          <div class="header-actions d-flex gap-2 align-items-center flex-wrap">
+            <input id="reg-desde" type="date" class="form-control form-control-sm" style="width:auto">
+            <input id="reg-hasta" type="date" class="form-control form-control-sm" style="width:auto">
+            <select id="reg-presets" class="form-select form-select-sm" style="width:auto">
+              <option value="">Rango rápido</option>
+              <option value="este_mes">Este mes</option>
+              <option value="mes_pasado">Mes pasado</option>
+              <option value="anio_actual">Año actual</option>
+              <option value="anio_pasado">Año pasado</option>
+            </select>
+            <button class="btn btn-outline-dark btn-sm" onclick="regExportPDF()"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+          </div>
+        </header>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm align-middle" id="tbl-registro">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Almacén</th>
+                    <th>N° Inventario</th>
+                    <th>Tipo/Tienda</th>
+                    <th>Registrado</th>
+                    <th>Inicio</th>
+                    <th>Fin</th>
+                    <th>Comparar</th>
+                    <th>Consolidado</th>
+                    <th>Proformas</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Vista Proformas -->
       <div id="view-proformas" class="invis">
-        <!-- Contenido de la vista Proformas -->
+        <header class="view-header">
+          <h1><i class="bi bi-receipt"></i>Simulación de Proformas</h1>
+          <div class="header-actions">
+            <button class="btn btn-primary" onclick="openProformaModal()"><i class="bi bi-plus-circle"></i> Nuevo Registro</button>
+          </div>
+        </header>
+
+        <div id="panel-proforma" class="invis">
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <div class="form-floating">
+                    <select id="pf-asesor" class="form-select">
+                      <option>Hervin</option>
+                      <option>Evelyn</option>
+                      <option>Alvaro</option>
+                      <option>Kimberly</option>
+                      <option>Otro</option>
+                    </select>
+                    <label>Asesor</label>
+                  </div>
+                  <input id="pf-asesor-otro" class="form-control mt-2 d-none" placeholder="Especifique nombre">
+                </div>
+                <div class="col-md-3">
+                  <div class="form-floating">
+                    <select id="pf-almacen" class="form-select">
+                      <option value="callao">Almacén Callao</option>
+                      <option value="malvinas">Almacén Malvinas</option>
+                    </select>
+                    <label>Almacén</label>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-floating">
+                    <select id="pf-registrado" class="form-select">
+                      <option>Joseph</option>
+                      <option>Joselyn</option>
+                      <option>Manuel</option>
+                      <option>Otro</option>
+                    </select>
+                    <label>Registrado por</label>
+                  </div>
+                  <input id="pf-registrado-otro" class="form-control mt-2 d-none" placeholder="Especifique nombre">
+                </div>
+                <div class="col-md-3">
+                  <div class="form-floating">
+                    <input id="pf-num" class="form-control" placeholder="N° Proforma">
+                    <label>Número de Proforma</label>
+                  </div>
+                </div>
+              </div>
+              <hr>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle" id="tbl-proforma">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>Unidad de Medida</th>
+                      <th>Cantidad</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <datalist id="pf-productos"></datalist>
+              </div>
+              <div class="d-flex justify-content-between">
+                <button class="btn btn-outline-primary" onclick="addLineaProforma()"><i class="bi bi-plus-lg"></i> Agregar</button>
+                <button class="btn btn-success" onclick="registrarProforma()"><i class="bi bi-check2-circle"></i> Registrar Proforma</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+              <h5 class="mb-0">Listado de Simulación de Proformas</h5>
+              <div class="d-flex gap-2">
+                <input id="filtro-proformas" class="form-control form-control-sm" placeholder="Buscar...">
+                <button class="btn btn-outline-dark btn-sm" onclick="pdfProformas()"><i class="bi bi-file-earmark-pdf"></i> Reporte PDF</button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm" id="tbl-list-proformas">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Fecha y Hora</th>
+                    <th>Asesor</th>
+                    <th>Registrado</th>
+                    <th>Almacén</th>
+                    <th>N° Proforma</th>
+                    <th>Archivo</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Vista Logística -->
