@@ -15,6 +15,8 @@ import { mostrarTablaInventario, renderPaginaInventario, renderListado } from '.
  * Cargar tiendas de Malvinas desde la API
  */
 export async function cargarTiendasMalvinas() {
+  let tiendas = [];
+
   try {
     console.log('Cargando tiendas de Malvinas desde API...');
     
@@ -29,34 +31,45 @@ export async function cargarTiendasMalvinas() {
       throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
     }
     
-    const tiendas = await response.json();
+    tiendas = await response.json();
     console.log('Tiendas de Malvinas cargadas desde API:', tiendas);
-    
-    // Actualizar el select de tiendas en el modal
-    const selectTienda = $('#inv-tienda');
-    if (selectTienda) {
-      selectTienda.innerHTML = '<option value="">Seleccione una tienda...</option>';
-      
-      tiendas.forEach(tienda => {
-        const option = document.createElement('option');
-        option.value = tienda.NOMBRE;
-        option.textContent = tienda.NOMBRE;
-        option.dataset.id = tienda.ID; // Guardar el ID de la tienda
-        selectTienda.appendChild(option);
-      });
-      
-      if (tiendas.length === 0) {
-        selectTienda.innerHTML = '<option value="">No hay tiendas disponibles</option>';
-      }
-    }
-    
-    console.log(`Cargadas ${tiendas.length} tiendas para Malvinas`);
-    return tiendas;
   } catch (error) {
     console.error('Error cargando tiendas de Malvinas:', error);
     toast('Error al cargar tiendas de Malvinas', 'error');
-    return [];
   }
+
+  if (!Array.isArray(tiendas)) {
+    tiendas = [];
+  }
+
+  if (tiendas.length === 0) {
+    tiendas = TIENDAS.map((nombre, idx) => ({
+      ID: `local_${idx}`,
+      NOMBRE: nombre
+    }));
+  }
+  
+  // Actualizar el select de tiendas en el modal
+  const selectTienda = $('#inv-tienda');
+  if (selectTienda) {
+    selectTienda.innerHTML = '<option value="">Seleccione una tienda...</option>';
+    
+    tiendas.forEach(tienda => {
+      const option = document.createElement('option');
+      option.value = tienda.NOMBRE;
+      option.textContent = tienda.NOMBRE;
+      option.dataset.id = tienda.ID; // Guardar el ID de la tienda
+      selectTienda.appendChild(option);
+    });
+
+    if (tiendas.length === 0) {
+      selectTienda.innerHTML = '<option value="">No hay tiendas disponibles</option>';
+    }
+  }
+
+  renderTiendas();
+  console.log(`Cargadas ${tiendas.length} tiendas para Malvinas`);
+  return tiendas;
 }
 
 /**

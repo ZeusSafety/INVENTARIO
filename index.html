@@ -357,7 +357,79 @@
 
       <!-- Vista Consolidado -->
       <div id="view-consolidado" class="invis">
-        <!-- Contenido de la vista Consolidado -->
+        <header class="view-header">
+          <h1><i class="bi bi-diagram-3"></i>Consolidado de Inventarios</h1>
+          <div class="header-actions">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="cons-show-cod" onchange="renderConsolidado()">
+              <label class="form-check-label" for="cons-show-cod">Mostrar códigos</label>
+            </div>
+          </div>
+        </header>
+
+        <div class="row g-4">
+          <div class="col-lg-4">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="cons-head cons-blue">Inventario Callao</div>
+                <div class="table-responsive">
+                  <table class="table consolidado-table" id="cons-callao">
+                    <thead>
+                      <tr>
+                        <th>Item</th>
+                        <th>Producto</th>
+                        <th>Sistema</th>
+                        <th>Físico</th>
+                        <th>Diferencia</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="cons-head cons-yellow">Inventario Malvinas</div>
+                <div class="table-responsive">
+                  <table class="table consolidado-table" id="cons-malvinas">
+                    <thead>
+                      <tr>
+                        <th>Producto</th>
+                        <th>Sistema</th>
+                        <th>Físico</th>
+                        <th>Diferencia</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="card h-100">
+              <div class="card-body">
+                <div class="cons-head cons-green">Conteo General</div>
+                <div class="table-responsive">
+                  <table class="table consolidado-table text-center" id="cons-general">
+                    <thead>
+                      <tr>
+                        <th>Total Sistema</th>
+                        <th>Total Físico</th>
+                        <th>Diferencia</th>
+                        <th>Resultado</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Vista Registro -->

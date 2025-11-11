@@ -351,6 +351,18 @@ export async function openInventarioModal(almacen, tipo) {
   
   inventarioCtx.almacen = almacen;
   inventarioCtx.tipo = tipo;
+
+  const campoAlmacen = $('inv-almacen')?.closest('.col-md-6');
+  const campoTipo = $('inv-tipo')?.closest('.col-md-6');
+  const ocultarCamposBasicos = tipo === 'cajas';
+
+  if (ocultarCamposBasicos) {
+    campoAlmacen?.classList.add('d-none');
+    campoTipo?.classList.add('d-none');
+  } else {
+    campoAlmacen?.classList.remove('d-none');
+    campoTipo?.classList.remove('d-none');
+  }
   
   $('inv-inicio').value = fmt12();
   $('inv-numero').value = AppState.sesionActual?.numero || `INV-${new Date().getFullYear()}-${(Math.floor(Math.random() * 900) + 100)}`;
