@@ -20,7 +20,7 @@ export function showView(v) {
   });
   
   // Mostrar/ocultar vistas
-  ['callao', 'malvinas', 'comparar', 'consolidado', 'registro', 'proformas', 'gerencia'].forEach(id => {
+  ['callao', 'malvinas', 'comparar', 'consolidado', 'registro', 'proformas', 'logistica', 'facturacion', 'gerencia'].forEach(id => {
     const el = $(`view-${id}`);
     if (el) el.classList.toggle('invis', id !== v);
   });

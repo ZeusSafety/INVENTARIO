@@ -51,6 +51,8 @@
       <li><a href="#" class="nav-item" data-view="consolidado"><i class="bi bi-diagram-3"></i> <span>Consolidado</span></a></li>
       <li><a href="#" class="nav-item" data-view="registro"><i class="bi bi-archive"></i> <span>Registro</span></a></li>
       <li><a href="#" class="nav-item" data-view="proformas"><i class="bi bi-receipt"></i> <span>Proformas</span></a></li>
+      <li><a href="#" class="nav-item" data-view="logistica"><i class="bi bi-truck"></i> <span>Logística</span></a></li>
+      <li><a href="#" class="nav-item" data-view="facturacion"><i class="bi bi-file-earmark-text"></i> <span>Facturación</span></a></li>
     </ul>
     <div class="sidebar-footer d-none"></div>
   </nav>
@@ -440,6 +442,68 @@
       <!-- Vista Proformas -->
       <div id="view-proformas" class="invis">
         <!-- Contenido de la vista Proformas -->
+      </div>
+
+      <!-- Vista Logística -->
+      <div id="view-logistica" class="invis">
+        <header class="view-header">
+          <h1><i class="bi bi-truck"></i>Logística</h1>
+        </header>
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm align-middle" id="tbl-logistica">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Fecha de Registro</th>
+                    <th>N° Inventario</th>
+                    <th>Registrado por</th>
+                    <th>Informe</th>
+                    <th>Estado</th>
+                    <th>Fecha de Respuesta</th>
+                    <th>Respuesta</th>
+                    <th>Estado Inventario</th>
+                    <th>Fecha de Registro</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista Facturación -->
+      <div id="view-facturacion" class="invis">
+        <header class="view-header">
+          <h1><i class="bi bi-calculator"></i>Facturación</h1>
+        </header>
+        <div class="card">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm align-middle" id="tbl-facturacion">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Fecha de Registro</th>
+                    <th>N° Inventario</th>
+                    <th>Registrado por</th>
+                    <th>Informe</th>
+                    <th>Estado</th>
+                    <th>Fecha de Respuesta</th>
+                    <th>Respuesta</th>
+                    <th>Acciones</th>
+                    <th>Estado Inventario</th>
+                    <th>Fecha de Registro</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Vista Gerencia -->
