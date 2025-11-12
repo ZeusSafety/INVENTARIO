@@ -4,7 +4,7 @@
  * Contiene todas las funciones relacionadas con la gestión de inventarios.
  */
 
-import { API_URLS, API_METHODS } from '../config.js';
+import { API_URLS, API_METHODS, API_SELECTORS } from '../config.js';
 import { AppState } from '../state.js';
 import { $, toast, fmt12, convertirFechaToMySQL } from '../utils.js';
 import { obtenerIdRegistradoPor } from './colaboradores.js';
@@ -652,6 +652,47 @@ export async function registrarInventario(almacen) {
     
     toast('Error al registrar el inventario: ' + mensajeError, 'error');
     alert('Ocurrió un error al registrar el inventario:\n\n' + mensajeError + '\n\nPor favor, intente nuevamente.');
+  }
+}
+
+/**
+ * Obtener reportes de inventarios generales
+ */
+export async function obtenerReportesInventarios() {
+  try {
+    const api = API_URLS.INVENTARIO;
+    const method = API_METHODS.COLABORADORES_INVENTARIO;
+    const selector = API_SELECTORS.INVENTARIOS_GENERAL_REPORTE;
+    
+    const url = `${api}?method=${method}&selector=${selector}`;
+    console.log('Obteniendo reportes desde:', url);
+    
+    const response = await fetch(url);
+    
+    if (response.status !== 200) {
+      const errorText = await response.text();
+      console.error('Error de la API:', errorText);
+      throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
+    }
+    
+    const datos = await response.json();
+    console.log('Reportes obtenidos (raw):', datos);
+    
+    // Normalizar datos
+    const reportes = Array.isArray(datos) ? datos : [datos];
+    console.log('Reportes normalizados:', reportes);
+    console.log('Cantidad de reportes:', reportes.length);
+    
+    // Guardar en el estado
+    AppState.reportes = reportes;
+    console.log('AppState.reportes actualizado:', AppState.reportes);
+    
+    return reportes;
+  } catch (error) {
+    console.error('Error obteniendo reportes:', error);
+    toast('Error al cargar reportes desde la API', 'error');
+    AppState.reportes = [];
+    return [];
   }
 }
 

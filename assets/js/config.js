@@ -17,6 +17,11 @@ export const API_METHODS = {
   EXTRAER_INVENTARIOS_CONTEOS: "extraer_inventarios_conteos"
 };
 
+// Selectores de API
+export const API_SELECTORS = {
+  INVENTARIOS_GENERAL_REPORTE: "INVENTARIOS_GENERAL_REPORTE"
+};
+
 // Configuración de la aplicación
 export const CONFIG = {
   JEFE_PWD: '0427',

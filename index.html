@@ -51,7 +51,7 @@
       <li><a href="#" class="nav-item" data-view="consolidado"><i class="bi bi-diagram-3"></i> <span>Consolidado</span></a></li>
       <li><a href="#" class="nav-item" data-view="registro"><i class="bi bi-archive"></i> <span>Registro</span></a></li>
       <li><a href="#" class="nav-item" data-view="proformas"><i class="bi bi-receipt"></i> <span>Proformas</span></a></li>
-      <li><a href="#" class="nav-item" data-view="logistica"><i class="bi bi-truck"></i> <span>Logística</span></a></li>
+      <li><a href="#" class="nav-item" data-view="logistica"><i class="bi bi-clipboard-check"></i> <span>Seguimiento</span></a></li>
       <li><a href="#" class="nav-item" data-view="facturacion"><i class="bi bi-file-earmark-text"></i> <span>Facturación</span></a></li>
     </ul>
     <div class="sidebar-footer d-none"></div>
@@ -585,10 +585,10 @@
         </div>
       </div>
 
-      <!-- Vista Logística -->
+      <!-- Vista Seguimiento -->
       <div id="view-logistica" class="invis">
         <header class="view-header">
-          <h1><i class="bi bi-truck"></i>Logística</h1>
+          <h1><i class="bi bi-clipboard-check"></i>Seguimiento</h1>
         </header>
         <div class="card">
           <div class="card-body">
@@ -605,6 +605,30 @@
                     <th>Fecha de Respuesta</th>
                     <th>Respuesta</th>
                     <th>Estado Inventario</th>
+                    <th>Fecha de Registro</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Apartado Reportes -->
+        <div class="card mt-4">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-file-earmark-text"></i> Reportes</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm align-middle" id="tbl-reportes">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Numero de Inventario</th>
+                    <th>Fecha de Culminacion de Inventario</th>
+                    <th>Estado de Inventario</th>
                     <th>Fecha de Registro</th>
                     <th>Acciones</th>
                   </tr>
@@ -714,7 +738,7 @@
           <div class="form-floating mb-2">
             <select id="sn-area" class="form-select">
               <option value="Administración">Administración</option>
-              <option value="Logística">Logística</option>
+              <option value="Seguimiento">Seguimiento</option>
               <option value="Otro">Otro</option>
             </select>
             <label>Área</label>

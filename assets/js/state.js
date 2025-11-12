@@ -13,7 +13,8 @@ export const AppState = {
   proformas: [],
   verificacion: {},
   sesionActual: { numero: null, creadoPor: null, inicio: null, activo: false },
-  paginacion: { callao: { pagina: 1, porPagina: 50 }, malvinas: { pagina: 1, porPagina: 50 } }
+  paginacion: { callao: { pagina: 1, porPagina: 50 }, malvinas: { pagina: 1, porPagina: 50 }, reportes: { pagina: 1, porPagina: 7 } },
+  reportes: []
 };
 
 // Variables globales de comparación
