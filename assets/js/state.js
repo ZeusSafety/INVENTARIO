@@ -14,7 +14,8 @@ export const AppState = {
   verificacion: {},
   sesionActual: { numero: null, creadoPor: null, inicio: null, activo: false },
   paginacion: { callao: { pagina: 1, porPagina: 50 }, malvinas: { pagina: 1, porPagina: 50 }, reportes: { pagina: 1, porPagina: 7 } },
-  reportes: []
+  reportes: [],
+  seguimiento: []
 };
 
 // Variables globales de comparación

@@ -8,7 +8,7 @@ import { qa, $ } from './utils.js';
 import { cargarConteosCallao, cargarConteosMalvinas } from './api/inventario.js';
 import { cargarTiendasMalvinas } from './views/malvinas.js';
 import { renderConsolidado } from './views/consolidado.js';
-import { cargarReportes } from './views/seguimiento.js';
+import { cargarTodoSeguimiento } from './views/seguimiento.js';
 // Nota: renderRegistro y renderListadoProformas se importarán cuando se creen esos módulos
 
 /**
@@ -57,10 +57,10 @@ export function showView(v) {
   }
   
   if (v === 'logistica') {
-    // Cargar reportes cuando se muestra la vista de seguimiento
+    // Cargar seguimiento y reportes cuando se muestra la vista de seguimiento
     // Esperar un momento para asegurar que la vista esté visible
     setTimeout(() => {
-      cargarReportes();
+      cargarTodoSeguimiento();
     }, 200);
   }
   

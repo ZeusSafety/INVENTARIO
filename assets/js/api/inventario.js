@@ -696,3 +696,78 @@ export async function obtenerReportesInventarios() {
   }
 }
 
+/**
+ * Obtener datos de seguimiento de inventarios
+ */
+export async function obtenerSeguimientoInventarios() {
+  try {
+    const api = API_URLS.INVENTARIO;
+    const method = API_METHODS.COLABORADORES_INVENTARIO;
+    const selector = API_SELECTORS.INVENTARIOS_GENERAL_SEGUIMIENTO;
+    
+    const url = `${api}?method=${method}&selector=${selector}`;
+    console.log('Obteniendo seguimiento desde:', url);
+    
+    const response = await fetch(url);
+    
+    if (response.status !== 200) {
+      const errorText = await response.text();
+      console.error('Error de la API:', errorText);
+      throw new Error(`Error HTTP: ${response.status} - ${errorText}`);
+    }
+    
+    const datos = await response.json();
+    console.log('Seguimiento obtenido (raw):', datos);
+    
+    // Normalizar datos
+    const seguimiento = Array.isArray(datos) ? datos : [datos];
+    console.log('Seguimiento normalizado:', seguimiento);
+    console.log('Cantidad de registros:', seguimiento.length);
+    
+    // Guardar en el estado
+    AppState.seguimiento = seguimiento;
+    console.log('AppState.seguimiento actualizado:', AppState.seguimiento);
+    
+    return seguimiento;
+  } catch (error) {
+    console.error('Error obteniendo seguimiento:', error);
+    toast('Error al cargar seguimiento desde la API', 'error');
+    AppState.seguimiento = [];
+    return [];
+  }
+}
+
+/**
+ * Parsear el campo INFORME que contiene JSON con enlaces PDF
+ */
+export function parsearInforme(informeStr) {
+  if (!informeStr) return [];
+  
+  try {
+    // Si es un string, intentar parsearlo
+    const informe = typeof informeStr === 'string' ? JSON.parse(informeStr) : informeStr;
+    
+    // Si es un array, retornarlo directamente
+    if (Array.isArray(informe)) {
+      return informe;
+    }
+    
+    // Si es un objeto con una propiedad que contiene el array
+    if (typeof informe === 'object' && informe.pdf) {
+      return [informe];
+    }
+    
+    // Si es un objeto, convertirlo a array
+    return [informe];
+  } catch (error) {
+    console.warn('Error parseando informe:', error, 'Valor:', informeStr);
+    // Si falla el parseo, intentar extraer URLs directamente
+    const urlRegex = /https?:\/\/[^\s"']+/g;
+    const urls = informeStr.match(urlRegex);
+    if (urls) {
+      return urls.map(url => ({ pdf: url }));
+    }
+    return [];
+  }
+}
+

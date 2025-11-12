@@ -938,6 +938,26 @@
   <!-- JavaScript Modulares (usando ES6 Modules) -->
   <script type="module" src="assets/js/main.js"></script>
   
+  <!-- Modal de Informes PDF -->
+  <div class="modal fade" id="modalInformesPDF" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 class="modal-title"><i class="bi bi-file-earmark-pdf"></i> Informes PDF</h6>
+          <button type="button" class="btn-close" onclick="closeModal('#modalInformesPDF')"></button>
+        </div>
+        <div class="modal-body">
+          <div id="informes-pdf-container">
+            <p class="text-muted">Cargando informes...</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('#modalInformesPDF')">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Error Handler Global -->
   <script>
     window.addEventListener('error', function(e) {
